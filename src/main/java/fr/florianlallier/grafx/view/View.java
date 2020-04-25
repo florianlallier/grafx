@@ -136,12 +136,12 @@ public class View extends BorderPane {
 		ToolBar bar = new ToolBar();
 		Label mode = new Label("Mode:");
 		ObservableList<String> modes = FXCollections.observableArrayList(ADDITION, EDITION, SUPPRESSION);
-		this.mode = new ComboBox<String>(modes);
+		this.mode = new ComboBox<>(modes);
 		Separator separator1 = new Separator();
 		separator1.setPadding(new Insets(0, 10, 0, 10));
 		Label vertex = new Label("Vertex:");
 		ObservableList<String> shapes = FXCollections.observableArrayList(CIRCLE, SQUARE);
-		this.vertexShape = new ComboBox<String>(shapes);
+		this.vertexShape = new ComboBox<>(shapes);
 		this.vertexShape.setValue(CIRCLE);
 		this.vertexColor = new ColorPicker();
 		this.vertexColor.setPrefWidth(50);

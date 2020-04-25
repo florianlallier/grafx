@@ -86,12 +86,6 @@ public class Edge extends Group implements Comparable<Object> {
 	@Override
 	public int compareTo(Object o) {
 		Edge edge = (Edge) o;
-		if (this.value < edge.value) {
-			return -1;
-		} else if (this.value > edge.value) {
-			return 1;
-		} else { // equality
-			return 0;
-		}
+		return Integer.compare(this.value, edge.value);
 	}
 }

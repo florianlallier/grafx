@@ -10,8 +10,8 @@ public class Graph {
 	private ArrayList<Edge> edgesKruskal;
 
 	public Graph() {
-		this.vertices = new ArrayList<Vertex>();
-		this.edges = new ArrayList<Edge>();
+		this.vertices = new ArrayList<>();
+		this.edges = new ArrayList<>();
 	}
 
 	public ArrayList<Vertex> getVertices() {
@@ -23,7 +23,7 @@ public class Graph {
 	}
 
 	public ArrayList<Edge> getEdgesKruskal() {
-		this.edgesKruskal = new ArrayList<Edge>();
+		this.edgesKruskal = new ArrayList<>();
 		return this.edgesKruskal;
 	}
 
@@ -80,7 +80,7 @@ public class Graph {
 	}
 
 	public ArrayList<Edge> getEdges(Vertex vertex) {
-		ArrayList<Edge> edges = new ArrayList<Edge>();
+		ArrayList<Edge> edges = new ArrayList<>();
 		for (Edge edge : this.edges) {
 			if (edge.getSource() == vertex || edge.getTarget() == vertex) {
 				edges.add(edge);
