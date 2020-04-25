@@ -2,9 +2,6 @@ package fr.florianlallier.grafx.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.ListIterator;
-
-import javafx.scene.paint.Color;
 
 public class Graph {
 
@@ -47,9 +44,7 @@ public class Graph {
 	}
 
 	public boolean containsVertex(String name) {
-		ListIterator<Vertex> iterator = this.vertices.listIterator();
-		while (iterator.hasNext()) {
-			Vertex vertex = iterator.next();
+		for (Vertex vertex : this.vertices) {
 			if (vertex.equals(name)) {
 				return true;
 			}
@@ -58,9 +53,7 @@ public class Graph {
 	}
 
 	public boolean containsEdge(String sourceName, String targetName) {
-		ListIterator<Edge> iterator = this.edges.listIterator();
-		while (iterator.hasNext()) {
-			Edge edge = iterator.next();
+		for (Edge edge : this.edges) {
 			if (edge.equals(sourceName, targetName)) {
 				return true;
 			}
@@ -69,9 +62,7 @@ public class Graph {
 	}
 
 	public Vertex getVertex(String name) {
-		ListIterator<Vertex> iterator = this.vertices.listIterator();
-		while (iterator.hasNext()) {
-			Vertex vertex = iterator.next();
+		for (Vertex vertex : this.vertices) {
 			if (vertex.equals(name)) {
 				return vertex;
 			}
@@ -80,9 +71,7 @@ public class Graph {
 	}
 
 	public Edge getEdge(String sourceName, String targetName) {
-		ListIterator<Edge> iterator = this.edges.listIterator();
-		while (iterator.hasNext()) {
-			Edge edge = iterator.next();
+		for (Edge edge : this.edges) {
 			if (edge.equals(sourceName, targetName)) {
 				return edge;
 			}
@@ -92,9 +81,7 @@ public class Graph {
 
 	public ArrayList<Edge> getEdges(Vertex vertex) {
 		ArrayList<Edge> edges = new ArrayList<Edge>();
-		ListIterator<Edge> iterator = this.edges.listIterator();
-		while (iterator.hasNext()) {
-			Edge edge = iterator.next();
+		for (Edge edge : this.edges) {
 			if (edge.getSource() == vertex || edge.getTarget() == vertex) {
 				edges.add(edge);
 			}

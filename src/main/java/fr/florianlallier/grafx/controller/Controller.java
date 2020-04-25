@@ -3,9 +3,7 @@ package fr.florianlallier.grafx.controller;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -73,9 +71,8 @@ public class Controller {
 
 	public ArrayList<Edge> removeVertex(Vertex vertex) {
 		ArrayList<Edge> edges = this.graph.getEdges(vertex);
-		ListIterator<Edge> iterator = edges.listIterator();
-		while (iterator.hasNext()) {
-			this.removeEdge(iterator.next());
+		for (Edge edge : edges) {
+			this.removeEdge(edge);
 		}
 		Grafx.LOGGER.info("Removing vertex " + vertex.toString());
 		this.graph.removeVertex(vertex);
@@ -94,17 +91,15 @@ public class Controller {
 
 	public void moveEdges(Vertex vertex) {
 		ArrayList<Edge> edges = this.graph.getEdges(vertex);
-		ListIterator<Edge> iterator = edges.listIterator();
-		while (iterator.hasNext()) {
-			iterator.next().refreshPosition();
+		for (Edge edge : edges) {
+			edge.refreshPosition();
 		}
 	}
 
 	public void selectVertex(Vertex vertex, Color color) {
 		ArrayList<Edge> edges = this.graph.getEdges(vertex);
-		ListIterator<Edge> iterator = edges.listIterator();
-		while (iterator.hasNext()) {
-			iterator.next().select(color);
+		for (Edge edge : edges) {
+			edge.select(color);
 		}
 		vertex.select(color);
 	}
@@ -123,9 +118,7 @@ public class Controller {
 			Element root = document.getRootElement();
 			/* Vertices */
 			List<Element> vertices = root.getChildren("vertex");
-			Iterator<Element> iteratorVertices = vertices.iterator();
-			while (iteratorVertices.hasNext()) {
-				Element elementVertex = iteratorVertices.next();
+			for (Element elementVertex : vertices) {
 				double x = Double.valueOf(elementVertex.getChild("x").getText());
 				double y = Double.valueOf(elementVertex.getChild("y").getText());
 				String shape = elementVertex.getChild("shape").getText();
@@ -138,9 +131,7 @@ public class Controller {
 			}
 			/* Edges */
 			List<Element> edges = root.getChildren("edge");
-			Iterator<Element> iteratorEdges = edges.iterator();
-			while (iteratorEdges.hasNext()) {
-				Element elementEdge = iteratorEdges.next();
+			for (Element elementEdge : edges) {
 				String sourceName = elementEdge.getChild("source_name").getText();
 				String targetName = elementEdge.getChild("target_name").getText();
 				String value = elementEdge.getChild("value").getText();
@@ -162,9 +153,7 @@ public class Controller {
 			Document document = new Document(root);
 			/* Vertices */
 			ArrayList<Vertex> vertices = this.graph.getVertices();
-			Iterator<Vertex> iteratorVertices = vertices.iterator();
-			while (iteratorVertices.hasNext()) {
-				Vertex vertex = iteratorVertices.next();
+			for (Vertex vertex : vertices) {
 				Element elementVertex = new Element("vertex");
 				root.addContent(elementVertex);
 				/* X */
@@ -190,9 +179,7 @@ public class Controller {
 			}
 			/* Edges */
 			ArrayList<Edge> edges = this.graph.getEdges();
-			Iterator<Edge> iteratorEdges = edges.iterator();
-			while (iteratorEdges.hasNext()) {
-				Edge edge = iteratorEdges.next();
+			for (Edge edge : edges) {
 				Element elementEdge = new Element("edge");
 				root.addContent(elementEdge);
 				/* Source name */

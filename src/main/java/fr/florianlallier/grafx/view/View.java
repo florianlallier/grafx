@@ -2,7 +2,6 @@ package fr.florianlallier.grafx.view;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import fr.florianlallier.grafx.Grafx;
 import fr.florianlallier.grafx.controller.Controller;
@@ -205,9 +204,7 @@ public class View extends BorderPane {
 		this.pressedFilterEdition = event -> {
 			pickedVertex = null;
 			ObservableList<Node> nodes = pane.getChildren();
-			Iterator<Node> iterator = nodes.iterator();
-			while (iterator.hasNext()) {
-				Node node = iterator.next();
+			for (Node node : nodes) {
 				if (node instanceof Vertex) {
 					controller.selectVertex((Vertex) node, DEFAULT_COLOR);
 				} else {
@@ -249,17 +246,14 @@ public class View extends BorderPane {
 				controller.clear();
 				pane.getChildren().clear();
 				ArrayList<Node> nodes = controller.open(file);
-				Iterator<Node> iterator = nodes.iterator();
-				while (iterator.hasNext()) {
-					Node node = iterator.next();
+				for (Node node : nodes) {
 					if (node instanceof Vertex) {
 						makeEditable((Vertex) node);
 						pane.getChildren().add(node);
 					} else {
 						makeEditable((Edge) node);
 						pane.getChildren().add(node);
-						node.toBack(); // moves edge to the back of its
-										// vertices
+						node.toBack(); // moves edge to the back of its vertices
 					}
 				}
 			} else if (!Util.isXMLFile(file)) {
@@ -416,9 +410,7 @@ public class View extends BorderPane {
 			addHandlers();
 			pickedVertex = null;
 			ObservableList<Node> nodes = pane.getChildren();
-			Iterator<Node> iterator = nodes.iterator();
-			while (iterator.hasNext()) {
-				Node node = iterator.next();
+			for (Node node : nodes) {
 				if (node instanceof Vertex) {
 					controller.selectVertex((Vertex) node, DEFAULT_COLOR);
 				} else {
@@ -437,9 +429,7 @@ public class View extends BorderPane {
 				pane.removeEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
 				pickedVertex = null;
 				ObservableList<Node> nodes = pane.getChildren();
-				Iterator<Node> iterator = nodes.iterator();
-				while (iterator.hasNext()) {
-					Node node = iterator.next();
+				for (Node node : nodes) {
 					if (node instanceof Vertex) {
 						controller.selectVertex((Vertex) node, DEFAULT_COLOR);
 					} else {
@@ -458,9 +448,7 @@ public class View extends BorderPane {
 				pane.removeEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
 				pickedVertex = null;
 				ObservableList<Node> nodes = pane.getChildren();
-				Iterator<Node> iterator = nodes.iterator();
-				while (iterator.hasNext()) {
-					Node node = iterator.next();
+				for (Node node : nodes) {
 					if (node instanceof Vertex) {
 						controller.selectVertex((Vertex) node, DEFAULT_COLOR);
 					} else {
