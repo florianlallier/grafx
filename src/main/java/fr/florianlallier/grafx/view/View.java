@@ -11,11 +11,8 @@ import fr.florianlallier.grafx.model.Vertex;
 import fr.florianlallier.grafx.util.Util;
 
 import javafx.animation.SequentialTransition;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
@@ -187,333 +184,287 @@ public class View extends BorderPane {
 	}
 
 	public void addFilters() {
-		this.consumeFilter = new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				event.consume();
+		this.consumeFilter = event -> event.consume();
+
+		this.pressedFilterAddition = event -> {
+			String name = vertexName.getText().toUpperCase();
+			if (!Util.isLetter(name)) {
+				errorVertex(1);
+				return;
+			}
+			Vertex vertex = controller.addVertexClick(event.getX(), event.getY(), vertexShape.getValue(),
+					vertexColor.getValue(), name);
+			if (vertex != null) {
+				makeEditable(vertex);
+				pane.getChildren().add(vertex);
+			} else {
+				errorVertex(2);
 			}
 		};
 
-		this.pressedFilterAddition = new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				String name = vertexName.getText().toUpperCase();
-				if (!Util.isLetter(name)) {
-					errorVertex(1);
-					return;
-				}
-				Vertex vertex = controller.addVertexClick(event.getX(), event.getY(), vertexShape.getValue(),
-						vertexColor.getValue(), name);
-				if (vertex != null) {
-					makeEditable(vertex);
-					pane.getChildren().add(vertex);
+		this.pressedFilterEdition = event -> {
+			pickedVertex = null;
+			ObservableList<Node> nodes = pane.getChildren();
+			Iterator<Node> iterator = nodes.iterator();
+			while (iterator.hasNext()) {
+				Node node = iterator.next();
+				if (node instanceof Vertex) {
+					controller.selectVertex((Vertex) node, DEFAULT_COLOR);
 				} else {
-					errorVertex(2);
+					controller.selectEdge((Edge) node, DEFAULT_COLOR);
 				}
 			}
 		};
 
-		this.pressedFilterEdition = new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				pickedVertex = null;
-				ObservableList<Node> nodes = pane.getChildren();
-				Iterator<Node> iterator = nodes.iterator();
-				while (iterator.hasNext()) {
-					Node node = iterator.next();
-					if (node instanceof Vertex) {
-						controller.selectVertex((Vertex) node, DEFAULT_COLOR);
-					} else {
-						controller.selectEdge((Edge) node, DEFAULT_COLOR);
-					}
+		this.rotateFilter = event -> {
+			if (pickedVertex != null && !pickedVertex.getTransforms().isEmpty()) {
+				double delta = 5;
+				KeyCode code = event.getCode();
+				Rotate rotate = (Rotate) pickedVertex.getTransforms().get(0);
+				if (code == KeyCode.F1) {
+					rotate.setAngle(rotate.getAngle() - delta);
+				} else if (code == KeyCode.F2) {
+					rotate.setAngle(rotate.getAngle() + delta);
 				}
-			}
-		};
-
-		this.rotateFilter = new EventHandler<KeyEvent>() {
-			@Override
-			public void handle(KeyEvent event) {
-				if (pickedVertex != null && !pickedVertex.getTransforms().isEmpty()) {
-					double delta = 5;
-					KeyCode code = event.getCode();
-					Rotate rotate = (Rotate) pickedVertex.getTransforms().get(0);
-					if (code == KeyCode.F1) {
-						rotate.setAngle(rotate.getAngle() - delta);
-					} else if (code == KeyCode.F2) {
-						rotate.setAngle(rotate.getAngle() + delta);
-					}
-					Bounds bounds = pickedVertex.getBoundsInLocal();
-					double x = (bounds.getMaxX() + bounds.getMinX()) / 2;
-					double y = (bounds.getMaxY() + bounds.getMinY()) / 2;
-					rotate.setPivotX(x);
-					rotate.setPivotY(y);
-				}
+				Bounds bounds = pickedVertex.getBoundsInLocal();
+				double x = (bounds.getMaxX() + bounds.getMinX()) / 2;
+				double y = (bounds.getMaxY() + bounds.getMinY()) / 2;
+				rotate.setPivotX(x);
+				rotate.setPivotY(y);
 			}
 		};
 	}
 
 	public void addHandlers() {
-		this.new_.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
+		this.new_.setOnAction(event -> {
+			controller.clear();
+			pane.getChildren().clear();
+		});
+
+		this.open.setOnAction(event -> {
+			File file = open();
+			if (file == null) { // closing file chooser
+				return;
+			} else if (Util.isXMLFile(file)) {
 				controller.clear();
 				pane.getChildren().clear();
-			}
-		});
-
-		this.open.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				File file = open();
-				if (file == null) { // closing file chooser
-					return;
-				} else if (Util.isXMLFile(file)) {
-					controller.clear();
-					pane.getChildren().clear();
-					ArrayList<Node> nodes = controller.open(file);
-					Iterator<Node> iterator = nodes.iterator();
-					while (iterator.hasNext()) {
-						Node node = iterator.next();
-						if (node instanceof Vertex) {
-							makeEditable((Vertex) node);
-							pane.getChildren().add(node);
-						} else {
-							makeEditable((Edge) node);
-							pane.getChildren().add(node);
-							node.toBack(); // moves edge to the back of its
-											// vertices
-						}
-					}
-				} else if (!Util.isXMLFile(file)) {
-					errorFile();
-				}
-			}
-		});
-
-		this.saveAs.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				File file = saveAs();
-				if (file == null) { // closing file chooser
-					return;
-				} else if (Util.isXMLFile(file)) {
-					controller.saveAs(file);
-				} else if (!Util.isXMLFile(file)) {
-					errorFile();
-				}
-			}
-		});
-
-		this.quit.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				System.exit(0);
-			}
-		});
-
-		this.addVertex.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				String name = vertexName.getText().toUpperCase();
-				if (!Util.isLetter(name)) {
-					errorVertex(1);
-					return;
-				}
-				Vertex vertex = controller.addVertex(vertexShape.getValue(), vertexColor.getValue(), name);
-				if (vertex != null) {
-					makeEditable(vertex);
-					pane.getChildren().add(vertex);
-				} else {
-					errorVertex(2);
-				}
-			}
-		});
-
-		this.addEdge.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				String sourceName = edgeSourceVertexName.getText().toUpperCase();
-				String targetName = edgeTargetVertexName.getText().toUpperCase();
-				String value = edgeValue.getText();
-				if (!Util.isLetter(sourceName) || !Util.isLetter(targetName) || !Util.isNumber(value)) {
-					errorEdge(1);
-					return;
-				}
-				if (sourceName.equals(targetName)) {
-					errorEdge(2);
-					return;
-				}
-				Edge edge = controller.addEdge(sourceName, targetName, value);
-				if (edge != null) {
-					if (!pane.getChildren().contains(edge)) { // create
-						makeEditable(edge);
-					} else { // replace
-						pane.getChildren().remove(edge);
-					}
-					pane.getChildren().add(edge);
-					edge.toBack(); // moves edge to the back of its vertices
-				} else {
-					errorEdge(3);
-				}
-			}
-		});
-
-		this.play.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				if (start) {
-					transitions.play();
-					play.setDisable(true);
-					pause.setDisable(false);
-					stop.setDisable(false);
-				} else {
-					int nbEdges = controller.nbEdges();
-
-					step1 = new Text();
-					step1.setFont(Font.font(null, FontWeight.BOLD, 12));
-					box.getChildren().add(step1);
-
-					logs1 = new Text[nbEdges];
-					for (int i = 0; i < nbEdges; i++) {
-						logs1[i] = new Text();
-						box.getChildren().add(logs1[i]);
-					}
-
-					note1 = new Text();
-					note1.setFont(Font.font(null, FontWeight.BOLD, 12));
-					box.getChildren().add(note1);
-
-					step2 = new Text();
-					step2.setFont(Font.font(null, FontWeight.BOLD, 12));
-					box.getChildren().add(step2);
-
-					logs2 = new Text[nbEdges];
-					for (int i = 0; i < nbEdges; i++) {
-						logs2[i] = new Text();
-						box.getChildren().add(logs2[i]);
-					}
-
-					note2 = new Text();
-					note2.setFont(Font.font(null, FontWeight.BOLD, 12));
-					box.getChildren().add(note2);
-					
-					weight = new Text();
-					weight.setFont(Font.font(null, FontWeight.BOLD, 14));
-					box.getChildren().add(weight);
-
-					transitions = new SequentialTransition();
-					try { // cheat of the death n° 1
-						transitions.getChildren().addAll(controller.start(step1, logs1, note1, step2, logs2, note2, weight));
-					} catch (Exception e) {
-						errorAlgorithm();
-					}
-					transitions.play();
-					start = true;
-					play.setDisable(true);
-					pause.setDisable(false);
-					stop.setDisable(false);
-					mode.setDisable(true);
-					vertexShape.setDisable(true);
-					vertexColor.setDisable(true);
-					vertexName.setDisable(true);
-					addVertex.setDisable(true);
-					edgeSourceVertexName.setDisable(true);
-					edgeTargetVertexName.setDisable(true);
-					edgeValue.setDisable(true);
-					addEdge.setDisable(true);
-					new_.setDisable(true);
-					open.setDisable(true);
-					saveAs.setDisable(true);
-					mode.setValue(mode.getValue() + " "); // cheat of the death n° 2
-				}
-			}
-		});
-
-		this.pause.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				transitions.pause();
-				play.setDisable(false);
-				pause.setDisable(true);
-				stop.setDisable(false);
-			}
-		});
-
-		this.stop.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				transitions.stop();
-				start = false;
-				mode.setDisable(false);
-				vertexShape.setDisable(false);
-				vertexColor.setDisable(false);
-				vertexName.setDisable(false);
-				addVertex.setDisable(false);
-				edgeSourceVertexName.setDisable(false);
-				edgeTargetVertexName.setDisable(false);
-				edgeValue.setDisable(false);
-				addEdge.setDisable(false);
-				new_.setDisable(false);
-				open.setDisable(false);
-				saveAs.setDisable(false);
-				mode.setValue(EDITION);
-				addAlgorithmBar();
-				addHandlers();
-				pickedVertex = null;
-				ObservableList<Node> nodes = pane.getChildren();
+				ArrayList<Node> nodes = controller.open(file);
 				Iterator<Node> iterator = nodes.iterator();
 				while (iterator.hasNext()) {
 					Node node = iterator.next();
 					if (node instanceof Vertex) {
-						controller.selectVertex((Vertex) node, DEFAULT_COLOR);
+						makeEditable((Vertex) node);
+						pane.getChildren().add(node);
 					} else {
-						controller.selectEdge((Edge) node, DEFAULT_COLOR);
+						makeEditable((Edge) node);
+						pane.getChildren().add(node);
+						node.toBack(); // moves edge to the back of its
+										// vertices
 					}
+				}
+			} else if (!Util.isXMLFile(file)) {
+				errorFile();
+			}
+		});
+
+		this.saveAs.setOnAction(event -> {
+			File file = saveAs();
+			if (file == null) { // closing file chooser
+				return;
+			} else if (Util.isXMLFile(file)) {
+				controller.saveAs(file);
+			} else if (!Util.isXMLFile(file)) {
+				errorFile();
+			}
+		});
+
+		this.quit.setOnAction(event -> System.exit(0));
+
+		this.addVertex.setOnAction(event -> {
+			String name = vertexName.getText().toUpperCase();
+			if (!Util.isLetter(name)) {
+				errorVertex(1);
+				return;
+			}
+			Vertex vertex = controller.addVertex(vertexShape.getValue(), vertexColor.getValue(), name);
+			if (vertex != null) {
+				makeEditable(vertex);
+				pane.getChildren().add(vertex);
+			} else {
+				errorVertex(2);
+			}
+		});
+
+		this.addEdge.setOnAction(event -> {
+			String sourceName = edgeSourceVertexName.getText().toUpperCase();
+			String targetName = edgeTargetVertexName.getText().toUpperCase();
+			String value = edgeValue.getText();
+			if (!Util.isLetter(sourceName) || !Util.isLetter(targetName) || !Util.isNumber(value)) {
+				errorEdge(1);
+				return;
+			}
+			if (sourceName.equals(targetName)) {
+				errorEdge(2);
+				return;
+			}
+			Edge edge = controller.addEdge(sourceName, targetName, value);
+			if (edge != null) {
+				if (!pane.getChildren().contains(edge)) { // create
+					makeEditable(edge);
+				} else { // replace
+					pane.getChildren().remove(edge);
+				}
+				pane.getChildren().add(edge);
+				edge.toBack(); // moves edge to the back of its vertices
+			} else {
+				errorEdge(3);
+			}
+		});
+
+		this.play.setOnAction(event -> {
+			if (start) {
+				transitions.play();
+				play.setDisable(true);
+				pause.setDisable(false);
+				stop.setDisable(false);
+			} else {
+				int nbEdges = controller.nbEdges();
+
+				step1 = new Text();
+				step1.setFont(Font.font(null, FontWeight.BOLD, 12));
+				box.getChildren().add(step1);
+
+				logs1 = new Text[nbEdges];
+				for (int i = 0; i < nbEdges; i++) {
+					logs1[i] = new Text();
+					box.getChildren().add(logs1[i]);
+				}
+
+				note1 = new Text();
+				note1.setFont(Font.font(null, FontWeight.BOLD, 12));
+				box.getChildren().add(note1);
+
+				step2 = new Text();
+				step2.setFont(Font.font(null, FontWeight.BOLD, 12));
+				box.getChildren().add(step2);
+
+				logs2 = new Text[nbEdges];
+				for (int i = 0; i < nbEdges; i++) {
+					logs2[i] = new Text();
+					box.getChildren().add(logs2[i]);
+				}
+
+				note2 = new Text();
+				note2.setFont(Font.font(null, FontWeight.BOLD, 12));
+				box.getChildren().add(note2);
+
+				weight = new Text();
+				weight.setFont(Font.font(null, FontWeight.BOLD, 14));
+				box.getChildren().add(weight);
+
+				transitions = new SequentialTransition();
+				try { // cheat of the death n° 1
+					transitions.getChildren().addAll(controller.start(step1, logs1, note1, step2, logs2, note2, weight));
+				} catch (Exception e) {
+					errorAlgorithm();
+				}
+				transitions.play();
+				start = true;
+				play.setDisable(true);
+				pause.setDisable(false);
+				stop.setDisable(false);
+				mode.setDisable(true);
+				vertexShape.setDisable(true);
+				vertexColor.setDisable(true);
+				vertexName.setDisable(true);
+				addVertex.setDisable(true);
+				edgeSourceVertexName.setDisable(true);
+				edgeTargetVertexName.setDisable(true);
+				edgeValue.setDisable(true);
+				addEdge.setDisable(true);
+				new_.setDisable(true);
+				open.setDisable(true);
+				saveAs.setDisable(true);
+				mode.setValue(mode.getValue() + " "); // cheat of the death n° 2
+			}
+		});
+
+		this.pause.setOnAction(event -> {
+			transitions.pause();
+			play.setDisable(false);
+			pause.setDisable(true);
+			stop.setDisable(false);
+		});
+
+		this.stop.setOnAction(event -> {
+			transitions.stop();
+			start = false;
+			mode.setDisable(false);
+			vertexShape.setDisable(false);
+			vertexColor.setDisable(false);
+			vertexName.setDisable(false);
+			addVertex.setDisable(false);
+			edgeSourceVertexName.setDisable(false);
+			edgeTargetVertexName.setDisable(false);
+			edgeValue.setDisable(false);
+			addEdge.setDisable(false);
+			new_.setDisable(false);
+			open.setDisable(false);
+			saveAs.setDisable(false);
+			mode.setValue(EDITION);
+			addAlgorithmBar();
+			addHandlers();
+			pickedVertex = null;
+			ObservableList<Node> nodes = pane.getChildren();
+			Iterator<Node> iterator = nodes.iterator();
+			while (iterator.hasNext()) {
+				Node node = iterator.next();
+				if (node instanceof Vertex) {
+					controller.selectVertex((Vertex) node, DEFAULT_COLOR);
+				} else {
+					controller.selectEdge((Edge) node, DEFAULT_COLOR);
 				}
 			}
 		});
 	}
 
 	public void addListeners() {
-		this.mode.valueProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				if (mode.getValue().equals(ADDITION)) {
-					pane.addEventFilter(MouseEvent.ANY, consumeFilter);
-					pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterEdition);
-					pane.addEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterAddition);
-					pane.removeEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
-					pickedVertex = null;
-					ObservableList<Node> nodes = pane.getChildren();
-					Iterator<Node> iterator = nodes.iterator();
-					while (iterator.hasNext()) {
-						Node node = iterator.next();
-						if (node instanceof Vertex) {
-							controller.selectVertex((Vertex) node, DEFAULT_COLOR);
-						} else {
-							controller.selectEdge((Edge) node, DEFAULT_COLOR);
-						}
+		this.mode.valueProperty().addListener((observable, oldValue, newValue) -> {
+			if (mode.getValue().equals(ADDITION)) {
+				pane.addEventFilter(MouseEvent.ANY, consumeFilter);
+				pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterEdition);
+				pane.addEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterAddition);
+				pane.removeEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
+				pickedVertex = null;
+				ObservableList<Node> nodes = pane.getChildren();
+				Iterator<Node> iterator = nodes.iterator();
+				while (iterator.hasNext()) {
+					Node node = iterator.next();
+					if (node instanceof Vertex) {
+						controller.selectVertex((Vertex) node, DEFAULT_COLOR);
+					} else {
+						controller.selectEdge((Edge) node, DEFAULT_COLOR);
 					}
-				} else if (mode.getValue().equals(EDITION)) {
-					pane.removeEventFilter(MouseEvent.ANY, consumeFilter);
-					pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterAddition);
-					pane.addEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterEdition);
-					pane.addEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
-				} else {
-					pane.removeEventFilter(MouseEvent.ANY, consumeFilter);
-					pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterAddition);
-					pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterEdition);
-					pane.removeEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
-					pickedVertex = null;
-					ObservableList<Node> nodes = pane.getChildren();
-					Iterator<Node> iterator = nodes.iterator();
-					while (iterator.hasNext()) {
-						Node node = iterator.next();
-						if (node instanceof Vertex) {
-							controller.selectVertex((Vertex) node, DEFAULT_COLOR);
-						} else {
-							controller.selectEdge((Edge) node, DEFAULT_COLOR);
-						}
+				}
+			} else if (mode.getValue().equals(EDITION)) {
+				pane.removeEventFilter(MouseEvent.ANY, consumeFilter);
+				pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterAddition);
+				pane.addEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterEdition);
+				pane.addEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
+			} else {
+				pane.removeEventFilter(MouseEvent.ANY, consumeFilter);
+				pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterAddition);
+				pane.removeEventFilter(MouseEvent.MOUSE_PRESSED, pressedFilterEdition);
+				pane.removeEventFilter(KeyEvent.KEY_PRESSED, rotateFilter);
+				pickedVertex = null;
+				ObservableList<Node> nodes = pane.getChildren();
+				Iterator<Node> iterator = nodes.iterator();
+				while (iterator.hasNext()) {
+					Node node = iterator.next();
+					if (node instanceof Vertex) {
+						controller.selectVertex((Vertex) node, DEFAULT_COLOR);
+					} else {
+						controller.selectEdge((Edge) node, DEFAULT_COLOR);
 					}
 				}
 			}
@@ -521,33 +472,13 @@ public class View extends BorderPane {
 
 		this.mode.setValue(EDITION);
 
-		this.vertexName.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				vertexName.setText(Util.parseLetter(vertexName.getText()));
-			}
-		});
+		this.vertexName.textProperty().addListener((observable, oldValue, newValue) -> vertexName.setText(Util.parseLetter(vertexName.getText())));
 
-		this.edgeSourceVertexName.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				edgeSourceVertexName.setText(Util.parseLetter(edgeSourceVertexName.getText()));
-			}
-		});
+		this.edgeSourceVertexName.textProperty().addListener((observable, oldValue, newValue) -> edgeSourceVertexName.setText(Util.parseLetter(edgeSourceVertexName.getText())));
 
-		this.edgeTargetVertexName.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				edgeTargetVertexName.setText(Util.parseLetter(edgeTargetVertexName.getText()));
-			}
-		});
+		this.edgeTargetVertexName.textProperty().addListener((observable, oldValue, newValue) -> edgeTargetVertexName.setText(Util.parseLetter(edgeTargetVertexName.getText())));
 
-		this.edgeValue.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				edgeValue.setText(Util.parseNumber(edgeValue.getText()));
-			}
-		});
+		this.edgeValue.textProperty().addListener((observable, oldValue, newValue) -> edgeValue.setText(Util.parseNumber(edgeValue.getText())));
 	}
 
 	public File open() {
@@ -615,35 +546,29 @@ public class View extends BorderPane {
 
 		final T t = new T();
 
-		vertex.setOnMousePressed(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(final MouseEvent event) {
-				if (mode.getValue().equals(EDITION)) { // move
-					pickedVertex = vertex;
-					pane.requestFocus();
-					controller.selectVertex(vertex, SELECT_COLOR);
-					t.initialTranslateX = vertex.getTranslateX();
-					t.initialTranslateY = vertex.getTranslateY();
-					Point2D point = vertex.localToParent(event.getX(), event.getY());
-					t.anchorX = point.getX();
-					t.anchorY = point.getY();
-				} else if (mode.getValue().equals(SUPPRESSION)) {
-					ArrayList<Edge> edges = controller.removeVertex(vertex);
-					pane.getChildren().removeAll(edges);
-					pane.getChildren().remove(vertex);
-				}
+		vertex.setOnMousePressed(event -> {
+			if (mode.getValue().equals(EDITION)) { // move
+				pickedVertex = vertex;
+				pane.requestFocus();
+				controller.selectVertex(vertex, SELECT_COLOR);
+				t.initialTranslateX = vertex.getTranslateX();
+				t.initialTranslateY = vertex.getTranslateY();
+				Point2D point = vertex.localToParent(event.getX(), event.getY());
+				t.anchorX = point.getX();
+				t.anchorY = point.getY();
+			} else if (mode.getValue().equals(SUPPRESSION)) {
+				ArrayList<Edge> edges = controller.removeVertex(vertex);
+				pane.getChildren().removeAll(edges);
+				pane.getChildren().remove(vertex);
 			}
 		});
 
-		vertex.setOnMouseDragged(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(final MouseEvent event) {
-				if (mode.getValue().equals(EDITION)) { // move
-					Point2D point = vertex.localToParent(event.getX(), event.getY());
-					vertex.setTranslateX(t.initialTranslateX - t.anchorX + point.getX());
-					vertex.setTranslateY(t.initialTranslateY - t.anchorY + point.getY());
-					controller.moveEdges(vertex);
-				}
+		vertex.setOnMouseDragged(event -> {
+			if (mode.getValue().equals(EDITION)) { // move
+				Point2D point = vertex.localToParent(event.getX(), event.getY());
+				vertex.setTranslateX(t.initialTranslateX - t.anchorX + point.getX());
+				vertex.setTranslateY(t.initialTranslateY - t.anchorY + point.getY());
+				controller.moveEdges(vertex);
 			}
 		});
 
@@ -652,15 +577,12 @@ public class View extends BorderPane {
 	}
 
 	public void makeEditable(final Edge edge) {
-		edge.setOnMousePressed(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(final MouseEvent event) {
-				if (mode.getValue().equals(EDITION)) { // selection
-					controller.selectEdge(edge, SELECT_COLOR);
-				} else if (mode.getValue().equals(SUPPRESSION)) {
-					controller.removeEdge(edge);
-					pane.getChildren().remove(edge);
-				}
+		edge.setOnMousePressed(event -> {
+			if (mode.getValue().equals(EDITION)) { // selection
+				controller.selectEdge(edge, SELECT_COLOR);
+			} else if (mode.getValue().equals(SUPPRESSION)) {
+				controller.removeEdge(edge);
+				pane.getChildren().remove(edge);
 			}
 		});
 	}
